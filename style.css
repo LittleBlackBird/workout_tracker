@@ -398,27 +398,32 @@ select:focus {
   flex-wrap: wrap;
 }
 
-@media (max-width: 520px) {
+@media (max-width: 768px) {
   .two-cols {
     grid-template-columns: 1fr;
   }
 
-.summary-row {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
+  .summary-row {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .summary-row > div {
+    flex: 1;
+    min-width: 0;
+  }
 
   .tabs {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
   }
 
   .tab-btn {
-    width: 100%;
+    width: 100% !important;
   }
 
   .inline-selectors {
