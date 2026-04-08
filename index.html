@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workout Tracker v6</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="phone-shell">
+    <div class="app">
+      <header class="app-header">
+        <h1>Workout Tracker</h1>
+        <p>Plan it. Do it. Record it.</p>
+      </header>
+
+      <section class="panel summary-panel">
+        <div class="summary-row">
+          <div>
+            <span class="summary-label">Today</span>
+            <strong id="todayDate"></strong>
+          </div>
+
+          <div>
+            <span class="summary-label">Selected</span>
+            <div class="inline-selectors">
+              <select id="week"></select>
+              <select id="day"></select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <nav class="tabs">
+        <button class="tab-btn active" data-tab="tab-add">Add New Exercise</button>
+        <button class="tab-btn" data-tab="tab-plan">Planned & Recorded</button>
+        <button class="tab-btn" data-tab="tab-history">Previous & Completed</button>
+      </nav>
+
+      <section id="tab-add" class="tab-panel active">
+        <section class="panel add-exercise-panel">
+          <div class="section-head">
+            <h2>Add New Exercise</h2>
+          </div>
+
+          <form id="newExerciseForm">
+            <div class="field-group">
+              <label for="newExerciseName">Exercise Name</label>
+              <input id="newExerciseName" type="text" placeholder="Example: Cable Curl" />
+            </div>
+
+            <div class="field-group">
+              <label for="newExerciseGif">GIF URL or local path</label>
+              <input id="newExerciseGif" type="text" placeholder="Example: gifs/cable-curl.gif" />
+            </div>
+
+            <button class="secondary-btn" type="submit">Add Exercise to Library</button>
+          </form>
+        </section>
+
+        <section class="panel edit-plan-panel">
+          <div class="section-head">
+            <h2>Edit Weekly Plan</h2>
+          </div>
+
+          <div class="field-group">
+            <label for="planDay">Plan Day</label>
+            <select id="planDay"></select>
+          </div>
+
+          <div id="planEditor" class="plan-editor-list"></div>
+
+          <div class="plan-editor-actions">
+            <button id="addPlanExercise" class="small-btn" type="button">Add Exercise</button>
+            <button id="savePlan" class="secondary-btn" type="button">Save Plan</button>
+          </div>
+        </section>
+      </section>
+
+      <section id="tab-plan" class="tab-panel">
+        <section class="panel planned-panel">
+          <div class="section-head">
+            <h2>Planned Exercises</h2>
+            <button id="loadPlanBtn" class="secondary-btn" type="button">Load Plan</button>
+          </div>
+          <div id="plannedList" class="stack-list"></div>
+        </section>
+
+        <section class="panel form-panel">
+          <div class="section-head">
+            <h2>Record What You Actually Did</h2>
+          </div>
+
+          <form id="form">
+            <div class="field-group">
+              <label for="exerciseSelect">Exercise</label>
+              <select id="exerciseSelect"></select>
+            </div>
+
+            <div class="gif-preview-box">
+              <p class="summary-label">Exercise GIF Preview</p>
+              <div id="gifPreviewContainer" class="gif-preview-container">
+                <span class="muted">No GIF selected</span>
+              </div>
+            </div>
+
+            <div class="two-cols">
+              <div class="field-group">
+                <label for="sets">Sets</label>
+                <input id="sets" type="number" min="1" placeholder="3" />
+              </div>
+
+              <div class="field-group">
+                <label for="load">Load (kg)</label>
+                <input id="load" type="number" min="0" step="0.5" placeholder="20" />
+              </div>
+            </div>
+
+            <div class="two-cols">
+              <div class="field-group">
+                <label for="reps">Reps</label>
+                <input id="reps" type="number" min="1" placeholder="12" />
+              </div>
+
+              <div class="field-group">
+                <label for="completedDate">Date Completed</label>
+                <input id="completedDate" type="date" />
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="notes">Notes</label>
+              <input id="notes" type="text" placeholder="Good form, hard last set..." />
+            </div>
+
+            <label class="checkbox-row">
+              <input id="doneCheckbox" type="checkbox" checked />
+              <span>Mark this exercise as done</span>
+            </label>
+
+            <button class="primary-btn" type="submit">Save Workout Entry</button>
+          </form>
+        </section>
+      </section>
+
+      <section id="tab-history" class="tab-panel">
+        <section class="panel previous-panel">
+          <div class="section-head">
+            <h2>Previous Week</h2>
+          </div>
+          <div id="previous"></div>
+        </section>
+
+        <section class="panel completed-panel">
+          <div class="section-head">
+            <h2>Completed Exercises</h2>
+          </div>
+          <div id="list" class="stack-list"></div>
+        </section>
+
+        <section class="panel footer-panel">
+          <button id="reset" class="danger-btn" type="button">Reset All Data</button>
+        </section>
+      </section>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
