@@ -398,7 +398,7 @@ select:focus {
   flex-wrap: wrap;
 }
 
-@media (max-width: 420px) {
+@media (max-width: 520px) {
   .two-cols {
     grid-template-columns: 1fr;
   }
@@ -409,7 +409,13 @@ select:focus {
   }
 
   .tabs {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .tab-btn {
+    width: 100%;
   }
 
   .inline-selectors {
