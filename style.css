@@ -403,10 +403,13 @@ select:focus {
     grid-template-columns: 1fr;
   }
 
-  .summary-row {
-    flex-direction: column;
-    gap: 10px;
-  }
+.summary-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
 
   .tabs {
     display: flex;
