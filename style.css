@@ -434,3 +434,17 @@ select:focus {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
+  .tabs {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 8px;
+  }
+
+  .tab-btn {
+    width: 100%;
+    font-size: 0.75rem;
+    padding: 10px 6px;
+  }
+}
