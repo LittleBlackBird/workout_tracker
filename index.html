@@ -3,129 +3,94 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Workout Tracker v6</title>
+  <meta name="theme-color" content="#0b1220" />
+  <title>Workout & Study Tracker</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
 </head>
 <body>
   <div class="phone-shell">
     <div class="app">
       <header class="app-header">
-        <h1>Workout Tracker</h1>
+        <h1>Workout &amp; Study Tracker</h1>
         <p>Plan it. Do it. Record it.</p>
       </header>
 
-      <section class="panel summary-panel">
-        <div class="summary-row">
-          <div>
-            <span class="summary-label">Today</span>
-            <strong id="todayDate"></strong>
-          </div>
-
-          <div>
-            <span class="summary-label">Selected</span>
-            <div class="inline-selectors">
-              <select id="week"></select>
-              <select id="day"></select>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <nav class="tabs">
-        <button class="tab-btn active" data-tab="tab-add">Add New Exercise</button>
-        <button class="tab-btn" data-tab="tab-plan">Planned & Recorded</button>
-        <button class="tab-btn" data-tab="tab-history">Previous & Completed</button>
+      <nav class="tabs" role="tablist" aria-label="Sections">
+        <button class="tab-btn active" role="tab" aria-selected="true" data-tab="tab-today">Today</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="tab-history">History</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="tab-dashboard">Dashboard</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="tab-library">Library</button>
       </nav>
 
-      <section id="tab-add" class="tab-panel active">
-        <section class="panel add-exercise-panel">
-          <div class="section-head">
-            <h2>Add New Exercise</h2>
+      <!-- ============ TODAY ============ -->
+      <section id="tab-today" class="tab-panel active" role="tabpanel">
+        <section class="panel date-panel">
+          <div class="date-nav">
+            <button id="prevDay" class="small-btn nav-btn" type="button" aria-label="Previous day">&#8249;</button>
+            <div class="date-center">
+              <input id="datePicker" type="date" aria-label="Selected date" />
+              <strong id="weekdayLabel"></strong>
+            </div>
+            <button id="nextDay" class="small-btn nav-btn" type="button" aria-label="Next day">&#8250;</button>
           </div>
-
-          <form id="newExerciseForm">
-            <div class="field-group">
-              <label for="newExerciseName">Exercise Name</label>
-              <input id="newExerciseName" type="text" placeholder="Example: Cable Curl" />
-            </div>
-
-            <div class="field-group">
-              <label for="newExerciseGif">GIF URL or local path</label>
-              <input id="newExerciseGif" type="text" placeholder="Example: gifs/cable-curl.gif" />
-            </div>
-
-            <button class="secondary-btn" type="submit">Add Exercise to Library</button>
-          </form>
+          <button id="jumpToday" class="small-btn today-btn" type="button">Jump to today</button>
         </section>
 
-        <section class="panel edit-plan-panel">
+        <section class="panel study-panel">
           <div class="section-head">
-            <h2>Edit Weekly Plan</h2>
+            <h2>Study hours</h2>
+            <span id="studyGoalLabel" class="summary-label"></span>
           </div>
-
-          <div class="field-group">
-            <label for="planDay">Plan Day</label>
-            <select id="planDay"></select>
+          <div class="study-row">
+            <input id="studyHours" type="number" min="0" max="24" step="0.25" placeholder="e.g. 5.5" aria-label="Hours studied" />
+            <button id="saveStudy" class="secondary-btn" type="button">Save hours</button>
           </div>
-
-          <div id="planEditor" class="plan-editor-list"></div>
-
-          <div class="plan-editor-actions">
-            <button id="addPlanExercise" class="small-btn" type="button">Add Exercise</button>
-            <button id="savePlan" class="secondary-btn" type="button">Save Plan</button>
+          <div class="progress-track" aria-hidden="true">
+            <div id="studyProgressFill" class="progress-fill"></div>
+            <div class="progress-goal-mark"></div>
           </div>
+          <p id="studyStatus" class="muted study-status"></p>
         </section>
-      </section>
 
-      <section id="tab-plan" class="tab-panel">
         <section class="panel planned-panel">
           <div class="section-head">
-            <h2>Planned Exercises</h2>
-            <button id="loadPlanBtn" class="secondary-btn" type="button">Load Plan</button>
+            <h2>Planned for <span id="plannedDayName"></span></h2>
           </div>
           <div id="plannedList" class="stack-list"></div>
         </section>
 
         <section class="panel form-panel">
           <div class="section-head">
-            <h2>Record What You Actually Did</h2>
+            <h2>Log a workout</h2>
           </div>
 
-          <form id="form">
+          <div id="editingBanner" class="editing-banner" hidden>
+            <span>Editing <strong id="editingName"></strong></span>
+            <button id="cancelEdit" class="small-btn" type="button">Cancel edit</button>
+          </div>
+
+          <form id="workoutForm">
             <div class="field-group">
               <label for="exerciseSelect">Exercise</label>
               <select id="exerciseSelect"></select>
             </div>
 
             <div class="gif-preview-box">
-              <p class="summary-label">Exercise GIF Preview</p>
+              <p class="summary-label">Exercise GIF preview</p>
               <div id="gifPreviewContainer" class="gif-preview-container">
                 <span class="muted">No GIF selected</span>
               </div>
             </div>
 
-            <div class="two-cols">
-              <div class="field-group">
-                <label for="sets">Sets</label>
-                <input id="sets" type="number" min="1" placeholder="3" />
+            <div class="field-group">
+              <div class="sets-head">
+                <label>Sets</label>
+                <button id="addSetRow" class="small-btn" type="button">+ Add set</button>
               </div>
-
-              <div class="field-group">
-                <label for="load">Load (kg)</label>
-                <input id="load" type="number" min="0" step="0.5" placeholder="20" />
-              </div>
-            </div>
-
-            <div class="two-cols">
-              <div class="field-group">
-                <label for="reps">Reps</label>
-                <input id="reps" type="number" min="1" placeholder="12" />
-              </div>
-
-              <div class="field-group">
-                <label for="completedDate">Date Completed</label>
-                <input id="completedDate" type="date" />
-              </div>
+              <div id="setRows" class="set-rows"></div>
             </div>
 
             <div class="field-group">
@@ -138,32 +103,129 @@
               <span>Mark this exercise as done</span>
             </label>
 
-            <button class="primary-btn" type="submit">Save Workout Entry</button>
+            <button class="primary-btn" type="submit">Save workout entry</button>
           </form>
+        </section>
+
+        <section class="panel logged-panel">
+          <div class="section-head">
+            <h2>Logged on <span id="loggedDayName"></span></h2>
+          </div>
+          <div id="loggedList" class="stack-list"></div>
         </section>
       </section>
 
-      <section id="tab-history" class="tab-panel">
-        <section class="panel previous-panel">
+      <!-- ============ HISTORY ============ -->
+      <section id="tab-history" class="tab-panel" role="tabpanel">
+        <section class="panel">
           <div class="section-head">
-            <h2>Previous Week</h2>
+            <h2>Past days</h2>
           </div>
-          <div id="previous"></div>
+          <div id="historyList" class="stack-list"></div>
         </section>
 
-        <section class="panel completed-panel">
+        <section class="panel">
           <div class="section-head">
-            <h2>Completed Exercises</h2>
+            <h2>Backup</h2>
           </div>
-          <div id="list" class="stack-list"></div>
+          <p class="muted">Your data lives only in this browser. Export a backup regularly, or move it to another device with import.</p>
+          <div class="backup-actions">
+            <button id="exportBtn" class="secondary-btn" type="button">Export data</button>
+            <button id="importBtn" class="secondary-btn" type="button">Import data</button>
+            <input id="importFile" type="file" accept="application/json" hidden />
+          </div>
         </section>
 
         <section class="panel footer-panel">
-          <button id="reset" class="danger-btn" type="button">Reset All Data</button>
+          <button id="reset" class="danger-btn" type="button">Reset all data</button>
+        </section>
+      </section>
+
+      <!-- ============ DASHBOARD ============ -->
+      <section id="tab-dashboard" class="tab-panel" role="tabpanel">
+        <section class="panel">
+          <div class="section-head">
+            <h2>Range</h2>
+            <div class="range-selector" role="group" aria-label="Dashboard range">
+              <button class="small-btn range-btn active" data-range="7" type="button">7 d</button>
+              <button class="small-btn range-btn" data-range="30" type="button">30 d</button>
+              <button class="small-btn range-btn" data-range="90" type="button">90 d</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <h2>Study hours</h2>
+            <span class="summary-label">Goal: 7 h / day</span>
+          </div>
+          <div id="studyStats" class="stat-grid"></div>
+          <div id="studyChart" class="chart-box"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <h2>Workouts</h2>
+          </div>
+          <div id="workoutStats" class="stat-grid"></div>
+          <p class="summary-label chart-caption">Exercises completed per day</p>
+          <div id="workoutChart" class="chart-box"></div>
+          <p class="summary-label chart-caption">Total volume per day (kg &times; reps)</p>
+          <div id="volumeChart" class="chart-box"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <h2>Exercise trend</h2>
+          </div>
+          <div class="field-group">
+            <label for="trendExercise">Exercise</label>
+            <select id="trendExercise"></select>
+          </div>
+          <p class="summary-label chart-caption">Heaviest set per day (kg)</p>
+          <div id="trendChart" class="chart-box"></div>
+        </section>
+      </section>
+
+      <!-- ============ LIBRARY ============ -->
+      <section id="tab-library" class="tab-panel" role="tabpanel">
+        <section class="panel">
+          <div class="section-head">
+            <h2>Add a new exercise</h2>
+          </div>
+          <form id="newExerciseForm">
+            <div class="field-group">
+              <label for="newExerciseName">Exercise name</label>
+              <input id="newExerciseName" type="text" placeholder="Example: Cable Curl" />
+            </div>
+            <div class="field-group">
+              <label for="newExerciseGif">GIF URL or local path</label>
+              <input id="newExerciseGif" type="text" placeholder="Example: gifs/cable-curl.gif" />
+            </div>
+            <button class="secondary-btn" type="submit">Add to library</button>
+          </form>
+          <div id="customList" class="stack-list custom-list"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <h2>Weekly plan</h2>
+          </div>
+          <div class="field-group">
+            <label for="planDay">Plan day</label>
+            <select id="planDay"></select>
+          </div>
+          <div id="planEditor" class="plan-editor-list"></div>
+          <div class="plan-editor-actions">
+            <button id="addPlanExercise" class="small-btn" type="button">Add exercise</button>
+            <button id="savePlan" class="secondary-btn" type="button">Save plan</button>
+          </div>
         </section>
       </section>
     </div>
   </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="script.js"></script>
 </body>
