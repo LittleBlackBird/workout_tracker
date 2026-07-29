@@ -682,3 +682,27 @@ button:active {
 .frame-anim {
   background: #0b1220;
 }
+
+/* ---------- Routine restore banner ---------- */
+.routine-banner {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid var(--accent-2);
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.routine-banner p {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  color: #e2e8f0;
+}
+
+.routine-banner-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.restore-actions {
+  margin-top: 8px;
+}

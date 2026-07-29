@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0b1220" />
   <title>Workout & Study Tracker</title>
-  <link rel="stylesheet" href="style.css?v=7.4" />
+  <link rel="stylesheet" href="style.css?v=7.5" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
@@ -58,6 +58,13 @@
         <section class="panel planned-panel">
           <div class="section-head">
             <h2>Planned for <span id="plannedDayName"></span></h2>
+          </div>
+          <div id="routineBanner" class="routine-banner" hidden>
+            <p>Your saved plan is from an earlier version, so the stretching and mobility work isn't in it yet.</p>
+            <div class="routine-banner-actions">
+              <button id="bannerLoadRoutine" class="secondary-btn" type="button">Load the full routine</button>
+              <button id="bannerDismiss" class="small-btn" type="button">Keep mine</button>
+            </div>
           </div>
           <div id="plannedList" class="stack-list"></div>
         </section>
@@ -237,6 +244,11 @@
           <div class="plan-editor-actions">
             <button id="addPlanExercise" class="small-btn" type="button">Add exercise</button>
             <button id="savePlan" class="secondary-btn" type="button">Save plan</button>
+            <button id="restoreRoutine" class="small-btn" type="button">Restore built-in day</button>
+          </div>
+          <div class="plan-editor-actions restore-actions">
+            <button id="restoreDay" class="small-btn" type="button">Restore this day</button>
+            <button id="restoreAll" class="small-btn" type="button">Restore all 7 days</button>
           </div>
         </section>
       </section>
@@ -245,6 +257,6 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="script.js?v=7.4"></script>
+  <script src="script.js?v=7.5"></script>
 </body>
 </html>

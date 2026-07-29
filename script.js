@@ -60,6 +60,20 @@ const dayTitles = {
   Sunday: "Rest & Reset"
 };
 
+const ROUTINE_VERSION = 2;
+
+/* The routine that shipped before the stretching plan was added. A stored day
+   that still matches this was never edited, so it is safe to upgrade. */
+const previousDefaultPlan = {
+  Monday: ["Lat Pulldown", "Row", "Barbell Curl", "Hammer Curl", "Farmer Walk", "Dead Hang"],
+  Tuesday: ["Bench Press", "Incline Bench", "Tricep Skullcrusher", "Tricep Pushdown", "Dips"],
+  Wednesday: ["Walk"],
+  Thursday: ["Lateral Raise", "Shoulder Press", "Alternating Curl", "Tricep Pushdown", "Reverse Curl"],
+  Friday: ["Run"],
+  Saturday: ["Hike"],
+  Sunday: []
+};
+
 const defaultPlan = {
   Monday: [
     "Lat Pulldown", "Cable / Barbell Row", "Barbell Curl", "Hammer Curl",
@@ -217,11 +231,12 @@ function clone(obj) {
    Database (single storage key) + migration from V6
    ========================================================= */
 let pendingUnitNotice = false;
+let pendingRoutineNotice = false;
 let db = loadDB();
 
 function emptyDB() {
   return {
-    version: DB_VERSION, studyGoal: STUDY_GOAL, unit: UNIT,
+    version: DB_VERSION, studyGoal: STUDY_GOAL, unit: UNIT, routine: ROUTINE_VERSION,
     library: {}, plan: clone(defaultPlan), days: {}
   };
 }
@@ -238,6 +253,10 @@ function loadDB() {
   if (parsed && typeof parsed.days === "object" &&
       (parsed.version === 7 || parsed.version === DB_VERSION)) {
     normaliseDB(parsed);
+    if (upgradeRoutine(parsed)) {
+      pendingRoutineNotice = true;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+    }
     if (parsed.version === 7) {
       convertLoadsKgToLb(parsed);
       parsed.version = DB_VERSION;
@@ -251,8 +270,33 @@ function loadDB() {
   const fresh = emptyDB();
   migrateFromV6(fresh);           // old data was recorded in kilograms
   convertLoadsKgToLb(fresh);
+  upgradeRoutine(fresh);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
   return fresh;
+}
+
+function sameList(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+  return a.every((v, i) => v === b[i]);
+}
+
+/** Brings each weekday up to the current built-in routine, but only where the
+ *  stored day still matches the previous built-in one (or is empty). Days the
+ *  user edited themselves are left exactly as they are. */
+function upgradeRoutine(target) {
+  if (target.routine === ROUTINE_VERSION) return 0;
+  let upgraded = 0;
+  DAYS.forEach((day) => {
+    const stored = target.plan[day];
+    const untouched = !Array.isArray(stored) || stored.length === 0 ||
+      sameList(stored, previousDefaultPlan[day]);
+    if (untouched && !sameList(stored, defaultPlan[day])) {
+      target.plan[day] = clone(defaultPlan[day]);
+      upgraded++;
+    }
+  });
+  target.routine = ROUTINE_VERSION;
+  return upgraded;
 }
 
 function normaliseDB(target) {
@@ -352,12 +396,15 @@ function pruneDay(iso) {
 /** Library entries may be a plain gif string (older data) or an object. */
 function normaliseEntry(value) {
   if (!value) return { gif: "", cue: "", type: "main" };
-  if (typeof value === "string") return { gif: value, cue: "", type: "main", fedb: "" };
+  if (typeof value === "string") {
+    return { gif: value, cue: "", type: "main", fedb: "", frames: [] };
+  }
   return {
     gif: value.gif || "",
     cue: value.cue || "",
     type: value.type || "main",
-    fedb: value.fedb || ""
+    fedb: value.fedb || "",
+    frames: Array.isArray(value.frames) ? value.frames.slice(0, 2) : []
   };
 }
 
@@ -373,19 +420,32 @@ function getLibrary() {
       ? { gif: custom.gif || merged[name].gif,
           cue: custom.cue || merged[name].cue,
           type: merged[name].type,
-          fedb: custom.fedb || merged[name].fedb }
+          fedb: custom.fedb || merged[name].fedb,
+          frames: custom.frames.length ? custom.frames : merged[name].frames }
       : custom;
   });
   return merged;
 }
 
 function libEntry(name) {
-  return getLibrary()[name] || { gif: "", cue: "", type: "main", fedb: "" };
+  return getLibrary()[name] || { gif: "", cue: "", type: "main", fedb: "", frames: [] };
 }
 
 function hasImage(name) {
-  const e = libEntry(name);
-  return Boolean(e.gif || e.fedb);
+  return frameUrls(libEntry(name)).length > 0 || Boolean(libEntry(name).gif);
+}
+
+/** Full URLs of the two still frames, from stored paths or a known id. */
+function frameUrls(entry) {
+  if (entry.frames && entry.frames.length) {
+    return entry.frames.map((path) =>
+      /^https?:/i.test(path) ? path : FEDB_IMG + encodeURI(path));
+  }
+  if (entry.fedb) {
+    return [FEDB_IMG + encodeURI(entry.fedb) + "/0.jpg",
+            FEDB_IMG + encodeURI(entry.fedb) + "/1.jpg"];
+  }
+  return [];
 }
 
 /** Renders an exercise image. A GIF you supplied wins; if it is missing or
@@ -394,8 +454,9 @@ function hasImage(name) {
 function exerciseImageHtml(name, className) {
   const entry = libEntry(name);
   const alt = escapeHtml(name);
-  const a = entry.fedb ? escapeHtml(FEDB_IMG + encodeURI(entry.fedb) + "/0.jpg") : "";
-  const b = entry.fedb ? escapeHtml(FEDB_IMG + encodeURI(entry.fedb) + "/1.jpg") : "";
+  const urls = frameUrls(entry);
+  const a = urls[0] ? escapeHtml(urls[0]) : "";
+  const b = urls[1] ? escapeHtml(urls[1]) : a;
   const frames = a ? `data-frame-a="${a}" data-frame-b="${b}"` : "";
 
   if (entry.gif) {
@@ -503,6 +564,7 @@ const refs = {
   librarySearch: $("librarySearch"), showMissingOnly: $("showMissingOnly"),
   autoMatch: $("autoMatch"),
   planDay: $("planDay"), planEditor: $("planEditor"),
+  routineBanner: $("routineBanner"),
   toast: $("toast"), resetBtn: $("reset")
 };
 
@@ -628,6 +690,11 @@ function init() {
     renderPlanEditor();
   });
   $("savePlan").addEventListener("click", saveEditedPlan);
+  $("restoreRoutine").addEventListener("click", restoreBuiltInRoutine);
+  $("restoreDay").addEventListener("click", () => restoreRoutine("day"));
+  $("restoreAll").addEventListener("click", () => restoreRoutine("all"));
+  $("bannerLoadRoutine").addEventListener("click", () => restoreRoutine("all"));
+  $("bannerDismiss").addEventListener("click", hideRoutineBanner);
   refs.planEditor.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-remove-index]");
     if (btn) {
@@ -637,10 +704,14 @@ function init() {
   });
 
   renderAll();
+  maybeOfferRoutine();
   animateFrames();
   registerServiceWorker();
 
-  if (pendingUnitNotice) {
+  if (pendingRoutineNotice) {
+    pendingRoutineNotice = false;
+    showToast("Weekly routine updated — stretching added.");
+  } else if (pendingUnitNotice) {
     pendingUnitNotice = false;
     showToast("Loads converted from kg to lb.");
   }
@@ -898,8 +969,14 @@ function refreshExerciseDropdowns() {
 function updateGifPreview() {
   const name = refs.exerciseSelect.value;
   const html = exerciseImageHtml(name, "preview-img");
-  refs.gifPreviewContainer.innerHTML = html ||
-    `<span class="muted">No image yet — add one in the Library tab</span>`;
+  if (html) {
+    refs.gifPreviewContainer.innerHTML = html;
+    return;
+  }
+  const cue = cueFor(name);
+  refs.gifPreviewContainer.innerHTML =
+    `<span class="muted">${cue ? escapeHtml(cue) + " — n" : "N"}o image yet.
+      Add one in the Library tab.</span>`;
 }
 
 function addSetRow(load = "", reps = "") {
@@ -1489,7 +1566,9 @@ async function autoMatchImages() {
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
 
-    const index = data.map((ex) => ({ id: ex.id, tokens: tokenise(ex.name) }));
+    const index = data
+      .filter((ex) => ex && ex.images && ex.images.length)
+      .map((ex) => ({ id: ex.id, images: ex.images.slice(0, 2), tokens: tokenise(ex.name) }));
     const lib = getLibrary();
     let matched = 0;
 
@@ -1503,7 +1582,8 @@ async function autoMatchImages() {
         gif: (db.library[name] && db.library[name].gif) || "",
         cue: (db.library[name] && db.library[name].cue) || base.cue,
         type: base.type || "main",
-        fedb: best
+        fedb: best.id,
+        frames: best.images
       };
       matched++;
     });
@@ -1533,18 +1613,18 @@ function tokenise(text) {
 /** Overlap score; requires a decent share of the query to be present. */
 function bestMatch(query, index) {
   if (!query.length) return null;
-  let bestId = null, bestScore = 0;
+  let best = null, bestScore = 0;
   index.forEach((item) => {
     let hits = 0;
     query.forEach((q) => {
       if (item.tokens.some((t) => t === q || t.indexOf(q) === 0 || q.indexOf(t) === 0)) hits++;
     });
     if (!hits) return;
-    // favour matches that also don't drag in lots of unrelated words
+    // favour matches that don't drag in lots of unrelated words
     const score = (hits / query.length) * 2 - (item.tokens.length - hits) * 0.06;
-    if (score > bestScore) { bestScore = score; bestId = item.id; }
+    if (score > bestScore) { bestScore = score; best = item; }
   });
-  return bestScore >= 1.2 ? bestId : null;
+  return bestScore >= 1.0 ? best : null;
 }
 
 function saveGifFor(name) {
@@ -1591,6 +1671,51 @@ function renderPlanEditor() {
         class="plan-editor-input" aria-label="Planned exercise ${index + 1}" />
       <button type="button" class="remove-btn" data-remove-index="${index}">Remove</button>
     </div>`).join("");
+}
+
+/** True when the saved plan predates the current built-in routine. */
+function planLooksOutdated() {
+  const lib = getLibrary();
+  const hasMobility = DAYS.some((day) =>
+    (db.plan[day] || []).some((n) => lib[n] && lib[n].type === "mobility"));
+  return !hasMobility;
+}
+
+function restoreRoutine(scope) {
+  if (scope === "day") {
+    const day = refs.planDay.value;
+    db.plan[day] = clone(defaultPlan[day] || []);
+    saveDB();
+    renderPlanEditor();
+    renderPlanned();
+    showToast(`${day} reset to the built-in routine.`);
+    return;
+  }
+  DAYS.forEach((day) => { db.plan[day] = clone(defaultPlan[day] || []); });
+  saveDB();
+  renderPlanEditor();
+  renderPlanned();
+  hideRoutineBanner();
+  showToast("Built-in routine loaded for all 7 days.");
+}
+
+function hideRoutineBanner() {
+  refs.routineBanner.hidden = true;
+}
+
+function maybeOfferRoutine() {
+  refs.routineBanner.hidden = !planLooksOutdated();
+}
+
+/** Puts the full built-in routine back, for a single day or the whole week. */
+function restoreBuiltInRoutine() {
+  const day = refs.planDay.value;
+  db.plan[day] = clone(defaultPlan[day] || []);
+  db.routine = ROUTINE_VERSION;
+  saveDB();
+  renderPlanEditor();
+  renderPlanned();
+  showToast(`${day} reset to the built-in routine.`);
 }
 
 function saveEditedPlan() {

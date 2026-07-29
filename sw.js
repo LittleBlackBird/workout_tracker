@@ -1,5 +1,5 @@
-const CACHE = "tracker-v5";
-const ASSETS = ["./", "index.html", "style.css?v=7.4", "script.js?v=7.4", "manifest.json", "icon-192.png", "icon-512.png"];
+const CACHE = "tracker-v6";
+const ASSETS = ["./", "index.html", "style.css?v=7.5", "script.js?v=7.5", "manifest.json", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
