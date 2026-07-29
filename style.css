@@ -450,6 +450,23 @@ button:active {
   margin-top: 10px;
 }
 
+.import-choice {
+  margin-top: 12px;
+  border: 1px solid var(--accent-2);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(14, 165, 233, 0.08);
+}
+
+.import-choice-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.import-choice-actions .danger-btn {
+  width: 100%;
+}
+
 /* ---------- Dashboard ---------- */
 .range-selector {
   display: flex;
@@ -583,4 +600,75 @@ button:active {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ---------- Routine grouping + cues ---------- */
+.group-label {
+  margin: 4px 0 2px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.group-label + .card {
+  margin-top: 0;
+}
+
+.cue {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+}
+
+.mobility-card {
+  background: rgba(24, 34, 53, 0.9);
+  border-left: 3px solid var(--warning);
+}
+
+/* ---------- Library manager ---------- */
+.library-toolbar {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.library-toolbar .checkbox-row {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.library-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.library-gif-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.library-gif-input {
+  font-size: 0.82rem;
+}
+
+.library-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.find-gif {
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+  color: #fff;
+  font-size: 0.9rem;
+  padding: 8px 12px;
 }

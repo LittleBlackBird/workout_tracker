@@ -4,44 +4,126 @@
    Constants
    ========================================================= */
 const STORAGE_KEY = "trackerV7";
+const DB_VERSION = 8; // v8 = loads stored in pounds
 const LEGACY_KEYS = {
   data: "workoutV6",
   custom: "workoutCustomExercisesV6",
   plan: "workoutPlanV6"
 };
-const STUDY_GOAL = 7; // hours per day
+const STUDY_GOAL = 7;   // hours per day
+const UNIT = "lb";      // weight unit used everywhere
+const KG_TO_LB = 2.20462;
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-const defaultPlan = {
-  Monday: ["Lat Pulldown", "Row", "Barbell Curl", "Hammer Curl", "Farmer Walk", "Dead Hang"],
-  Tuesday: ["Bench Press", "Incline Bench", "Tricep Skullcrusher", "Tricep Pushdown", "Dips"],
-  Wednesday: ["Walk"],
-  Thursday: ["Lateral Raise", "Shoulder Press", "Alternating Curl", "Tricep Pushdown", "Reverse Curl"],
-  Friday: ["Run"],
-  Saturday: ["Hike"],
-  Sunday: []
+const dayTitles = {
+  Monday: "Pull & Grip (Gym)",
+  Tuesday: "Push (Gym)",
+  Wednesday: "Active Recovery (Walk)",
+  Thursday: "Lower Body & Legs (Gym)",
+  Friday: "Cardio & Endurance (Run)",
+  Saturday: "Outdoor Endurance (Hike)",
+  Sunday: "Rest & Reset"
 };
 
+const defaultPlan = {
+  Monday: [
+    "Lat Pulldown", "Cable / Barbell Row", "Barbell Curl", "Hammer Curl",
+    "Farmer Walk", "Dead Hang",
+    "Child's Pose with Side Reach", "Passive Dead Hang", "Thread the Needle"
+  ],
+  Tuesday: [
+    "Bench Press", "Incline Bench Press", "Dips", "Tricep Pushdown", "Lateral Raise",
+    "Doorway / Corner Chest Stretch", "Standing Overhead Lat & Side Stretch", "Cat-Cow"
+  ],
+  Wednesday: [
+    "Daily Walk",
+    "Kneeling Hip Flexor Stretch", "Glute Bridge", "Figure-4 / Seated Pigeon Stretch"
+  ],
+  Thursday: [
+    "Squat / Goblet Squat", "Romanian Deadlift", "Lunge / Step-up", "Calf Raise",
+    "Quad Stretch", "Single-Leg Hamstring Stretch", "Spinal Decompression"
+  ],
+  Friday: [
+    "Run",
+    "Wall Calf Stretch", "Kneeling Lunge Hip Flexor Stretch", "Standing Forward Fold"
+  ],
+  Saturday: [
+    "Hike",
+    "Pigeon Pose / Floor Figure-4", "Butterfly Stretch", "Legs-Up-The-Wall"
+  ],
+  Sunday: [
+    "Complete Physical Rest",
+    "World's Greatest Stretch", "Bird-Dog", "Kneeling Hip Flexor Stretch", "Deep Squat Hold"
+  ]
+};
+
+/* Library entries: { gif, cue, type }
+   type: "main" = strength/cardio, "mobility" = stretch & mobility,
+         "legacy" = kept only so older logged entries still display. */
 const defaultLibrary = {
-  "Lat Pulldown": "gifs/lat-pulldown.gif",
-  "Row": "gifs/row.gif",
-  "Barbell Curl": "gifs/barbell-curl.gif",
-  "Hammer Curl": "gifs/hammer-curl.gif",
-  "Farmer Walk": "gifs/farmer-walk.gif",
-  "Dead Hang": "gifs/dead-hang.gif",
-  "Bench Press": "gifs/bench-press.gif",
-  "Incline Bench": "gifs/incline-bench.gif",
-  "Tricep Skullcrusher": "gifs/skullcrusher.gif",
-  "Tricep Pushdown": "gifs/tricep-pushdown.gif",
-  "Dips": "gifs/dips.gif",
-  "Walk": "gifs/walk.gif",
-  "Lateral Raise": "gifs/lateral-raise.gif",
-  "Shoulder Press": "gifs/shoulder-press.gif",
-  "Alternating Curl": "gifs/alternating-curl.gif",
-  "Reverse Curl": "gifs/reverse-curl.gif",
-  "Run": "gifs/run.gif",
-  "Hike": "gifs/hike.gif"
+  /* ---- Monday: pull & grip ---- */
+  "Lat Pulldown":                        { gif: "gifs/lat-pulldown.gif",       cue: "3-4 sets",              type: "main" },
+  "Cable / Barbell Row":                 { gif: "gifs/row.gif",                cue: "3-4 sets",              type: "main" },
+  "Barbell Curl":                        { gif: "gifs/barbell-curl.gif",       cue: "3 sets",                type: "main" },
+  "Hammer Curl":                         { gif: "gifs/hammer-curl.gif",        cue: "3 sets",                type: "main" },
+  "Farmer Walk":                         { gif: "gifs/farmer-walk.gif",        cue: "3 loaded carries",      type: "main" },
+  "Dead Hang":                           { gif: "gifs/dead-hang.gif",          cue: "Max hold",              type: "main" },
+  "Child's Pose with Side Reach":        { gif: "",                            cue: "30 sec / side",         type: "mobility" },
+  "Passive Dead Hang":                   { gif: "gifs/dead-hang.gif",          cue: "2-3 x 20-30 sec",       type: "mobility" },
+  "Thread the Needle":                   { gif: "",                            cue: "30 sec / side",         type: "mobility" },
+
+  /* ---- Tuesday: push ---- */
+  "Bench Press":                         { gif: "gifs/bench-press.gif",        cue: "4 sets",                type: "main" },
+  "Incline Bench Press":                 { gif: "gifs/incline-bench.gif",      cue: "3 sets",                type: "main" },
+  "Dips":                                { gif: "gifs/dips.gif",               cue: "3 sets",                type: "main" },
+  "Tricep Pushdown":                     { gif: "gifs/tricep-pushdown.gif",    cue: "3 sets",                type: "main" },
+  "Lateral Raise":                       { gif: "gifs/lateral-raise.gif",      cue: "3 sets",                type: "main" },
+  "Doorway / Corner Chest Stretch":      { gif: "",                            cue: "30 sec / side",         type: "mobility" },
+  "Standing Overhead Lat & Side Stretch":{ gif: "",                            cue: "30 sec / side",         type: "mobility" },
+  "Cat-Cow":                             { gif: "",                            cue: "10 slow reps",          type: "mobility" },
+
+  /* ---- Wednesday: active recovery ---- */
+  "Daily Walk":                          { gif: "gifs/walk.gif",               cue: "8,000-10,000 steps",    type: "main" },
+  "Kneeling Hip Flexor Stretch":         { gif: "",                            cue: "45 sec / side",         type: "mobility" },
+  "Glute Bridge":                        { gif: "",                            cue: "2 x 12 (activation)",   type: "mobility" },
+  "Figure-4 / Seated Pigeon Stretch":    { gif: "",                            cue: "45 sec / side",         type: "mobility" },
+
+  /* ---- Thursday: lower body ---- */
+  "Squat / Goblet Squat":                { gif: "https://commons.wikimedia.org/wiki/Special:FilePath/Squats.gif", cue: "4 sets", type: "main" },
+  "Romanian Deadlift":                   { gif: "",                            cue: "3-4 sets",              type: "main" },
+  "Lunge / Step-up":                     { gif: "",                            cue: "3 sets / side",         type: "main" },
+  "Calf Raise":                          { gif: "",                            cue: "3-4 sets",              type: "main" },
+  "Quad Stretch":                        { gif: "",                            cue: "30 sec / side",         type: "mobility" },
+  "Single-Leg Hamstring Stretch":        { gif: "",                            cue: "45 sec / side, soft knee", type: "mobility" },
+  "Spinal Decompression":                { gif: "",                            cue: "5 min, legs 90° on chair", type: "mobility" },
+
+  /* ---- Friday: cardio ---- */
+  "Run":                                 { gif: "gifs/run.gif",                cue: "Road or trail",         type: "main" },
+  "Wall Calf Stretch":                   { gif: "",                            cue: "45 sec / side",         type: "mobility" },
+  "Kneeling Lunge Hip Flexor Stretch":   { gif: "",                            cue: "45 sec / side",         type: "mobility" },
+  "Standing Forward Fold":               { gif: "",                            cue: "30 sec, soft knees",    type: "mobility" },
+
+  /* ---- Saturday: hike ---- */
+  "Hike":                                { gif: "gifs/hike.gif",               cue: "Trail / mountain",      type: "main" },
+  "Pigeon Pose / Floor Figure-4":        { gif: "",                            cue: "60 sec / side",         type: "mobility" },
+  "Butterfly Stretch":                   { gif: "",                            cue: "45 sec (adductors)",    type: "mobility" },
+  "Legs-Up-The-Wall":                    { gif: "",                            cue: "5 min passive",         type: "mobility" },
+
+  /* ---- Sunday: rest & reset ---- */
+  "Complete Physical Rest":              { gif: "",                            cue: "No training today",     type: "main" },
+  "World's Greatest Stretch":            { gif: "",                            cue: "5 reps / side",         type: "mobility" },
+  "Bird-Dog":                            { gif: "",                            cue: "3 x 6-8 / side",        type: "mobility" },
+  "Deep Squat Hold":                     { gif: "",                            cue: "Hold, breathe",         type: "mobility" },
+
+  /* ---- Kept so previously logged entries still show correctly ---- */
+  "Row":                                 { gif: "gifs/row.gif",                cue: "", type: "legacy" },
+  "Incline Bench":                       { gif: "gifs/incline-bench.gif",      cue: "", type: "legacy" },
+  "Tricep Skullcrusher":                 { gif: "gifs/skullcrusher.gif",       cue: "", type: "legacy" },
+  "Shoulder Press":                      { gif: "gifs/shoulder-press.gif",     cue: "", type: "legacy" },
+  "Alternating Curl":                    { gif: "gifs/alternating-curl.gif",   cue: "", type: "legacy" },
+  "Reverse Curl":                        { gif: "gifs/reverse-curl.gif",       cue: "", type: "legacy" },
+  "Walk":                                { gif: "gifs/walk.gif",               cue: "", type: "legacy" }
 };
 
 /* =========================================================
@@ -100,29 +182,70 @@ function clone(obj) {
 /* =========================================================
    Database (single storage key) + migration from V6
    ========================================================= */
+let pendingUnitNotice = false;
 let db = loadDB();
 
 function emptyDB() {
-  return { version: 7, studyGoal: STUDY_GOAL, library: {}, plan: clone(defaultPlan), days: {} };
+  return {
+    version: DB_VERSION, studyGoal: STUDY_GOAL, unit: UNIT,
+    library: {}, plan: clone(defaultPlan), days: {}
+  };
 }
 
+/** Loads/normalises the stored database, upgrading older shapes:
+ *  v6 (Week X-Day keys)  -> date-keyed days
+ *  v7 (loads in kg)      -> loads converted to pounds */
 function loadDB() {
   let parsed = null;
   try {
     parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
-  } catch { /* corrupted -> rebuild */ }
+  } catch (e) { /* corrupted -> rebuild */ }
 
-  if (parsed && parsed.version === 7 && typeof parsed.days === "object") {
-    parsed.library = parsed.library || {};
-    parsed.plan = parsed.plan || clone(defaultPlan);
-    parsed.studyGoal = Number(parsed.studyGoal) || STUDY_GOAL;
+  if (parsed && typeof parsed.days === "object" &&
+      (parsed.version === 7 || parsed.version === DB_VERSION)) {
+    normaliseDB(parsed);
+    if (parsed.version === 7) {
+      convertLoadsKgToLb(parsed);
+      parsed.version = DB_VERSION;
+      parsed.unit = UNIT;
+      pendingUnitNotice = true;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+    }
     return parsed;
   }
 
   const fresh = emptyDB();
-  migrateFromV6(fresh);
+  migrateFromV6(fresh);           // old data was recorded in kilograms
+  convertLoadsKgToLb(fresh);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
   return fresh;
+}
+
+function normaliseDB(target) {
+  target.library = target.library || {};
+  target.plan = target.plan || clone(defaultPlan);
+  target.studyGoal = Number(target.studyGoal) || STUDY_GOAL;
+  DAYS.forEach((day) => {
+    if (!Array.isArray(target.plan[day])) target.plan[day] = clone(defaultPlan[day] || []);
+  });
+}
+
+/** One-time unit change: every stored load was entered in kilograms, so
+ *  convert to pounds and round to the nearest half pound. */
+function convertLoadsKgToLb(target) {
+  let touched = 0;
+  Object.keys(target.days || {}).forEach((iso) => {
+    (target.days[iso].workouts || []).forEach((w) => {
+      (w.sets || []).forEach((s) => {
+        const kg = Number(s.load) || 0;
+        if (kg > 0) {
+          s.load = Math.round(kg * KG_TO_LB * 2) / 2;
+          touched++;
+        }
+      });
+    });
+  });
+  return touched;
 }
 
 /** Import old "Week X-Day" data. Entries with a completedDate move to that
@@ -131,19 +254,30 @@ function loadDB() {
 function migrateFromV6(target) {
   try {
     const oldCustom = JSON.parse(localStorage.getItem(LEGACY_KEYS.custom) || "{}");
-    if (oldCustom && typeof oldCustom === "object") target.library = { ...oldCustom };
-  } catch { /* ignore */ }
+    if (oldCustom && typeof oldCustom === "object") {
+      Object.keys(oldCustom).forEach((name) => {
+        target.library[name] = { gif: String(oldCustom[name] || ""), cue: "", type: "main" };
+      });
+    }
+  } catch (e) { /* ignore */ }
 
   try {
     const oldPlan = JSON.parse(localStorage.getItem(LEGACY_KEYS.plan) || "null");
-    if (oldPlan && typeof oldPlan === "object") target.plan = { ...clone(defaultPlan), ...oldPlan };
-  } catch { /* ignore */ }
+    if (oldPlan && typeof oldPlan === "object") {
+      // Keep the new routine, but don't lose days the user had customised.
+      Object.keys(oldPlan).forEach((day) => {
+        if (Array.isArray(oldPlan[day]) && oldPlan[day].length) {
+          target.plan[day] = oldPlan[day].slice();
+        }
+      });
+    }
+  } catch (e) { /* ignore */ }
 
   try {
     const oldData = JSON.parse(localStorage.getItem(LEGACY_KEYS.data) || "{}");
     let migrated = 0;
-    Object.values(oldData || {}).forEach((entries) => {
-      (entries || []).forEach((e) => {
+    Object.keys(oldData || {}).forEach((key) => {
+      (oldData[key] || []).forEach((e) => {
         if (!e || !e.name || !isValidISO(e.completedDate || "")) return;
         const day = getDay(e.completedDate, target);
         const setCount = Math.max(1, Number(e.sets) || 1);
@@ -154,17 +288,14 @@ function migrateFromV6(target) {
           }
         }
         day.workouts.push({
-          id: uid(),
-          name: String(e.name),
-          sets,
-          notes: String(e.notes || ""),
-          done: Boolean(e.done)
+          id: uid(), name: String(e.name), sets,
+          notes: String(e.notes || ""), done: Boolean(e.done)
         });
         migrated++;
       });
     });
-    if (migrated) console.info(`Migrated ${migrated} entries from the old format.`);
-  } catch { /* ignore */ }
+    if (migrated) console.info("Migrated " + migrated + " entries from the old format.");
+  } catch (e) { /* ignore */ }
 }
 
 function saveDB() {
@@ -184,12 +315,58 @@ function pruneDay(iso) {
   }
 }
 
+/** Library entries may be a plain gif string (older data) or an object. */
+function normaliseEntry(value) {
+  if (!value) return { gif: "", cue: "", type: "main" };
+  if (typeof value === "string") return { gif: value, cue: "", type: "main" };
+  return {
+    gif: value.gif || "",
+    cue: value.cue || "",
+    type: value.type || "main"
+  };
+}
+
 function getLibrary() {
-  return { ...defaultLibrary, ...db.library };
+  const merged = {};
+  Object.keys(defaultLibrary).forEach((name) => {
+    merged[name] = normaliseEntry(defaultLibrary[name]);
+  });
+  Object.keys(db.library || {}).forEach((name) => {
+    const custom = normaliseEntry(db.library[name]);
+    // A user-set GIF overrides the built-in one; cue/type fall back to it.
+    merged[name] = merged[name]
+      ? { gif: custom.gif || merged[name].gif,
+          cue: custom.cue || merged[name].cue,
+          type: merged[name].type }
+      : custom;
+  });
+  return merged;
+}
+
+function libEntry(name) {
+  return getLibrary()[name] || { gif: "", cue: "", type: "main" };
 }
 
 function gifFor(name) {
-  return getLibrary()[name] || "";
+  return libEntry(name).gif;
+}
+
+function cueFor(name) {
+  return libEntry(name).cue;
+}
+
+function typeFor(name) {
+  return libEntry(name).type;
+}
+
+function isCustom(name) {
+  return Object.prototype.hasOwnProperty.call(db.library || {}, name);
+}
+
+/** Opens an image search for this exercise so a GIF can be found quickly. */
+function gifSearchUrl(name) {
+  return "https://duckduckgo.com/?iax=images&ia=images&q=" +
+    encodeURIComponent(name + " exercise gif");
 }
 
 function isPlanned(name, iso) {
@@ -206,7 +383,7 @@ function topLoad(entry) {
 
 function setsSummary(entry) {
   if (!entry.sets || !entry.sets.length) return "No sets logged";
-  return entry.sets.map((s) => `${s.load || 0} kg × ${s.reps || 0}`).join("  ·  ");
+  return entry.sets.map((s) => `${s.load || 0} ${UNIT} × ${s.reps || 0}`).join("  ·  ");
 }
 
 /* =========================================================
@@ -215,6 +392,8 @@ function setsSummary(entry) {
 let selectedDate = todayISO();
 let editing = null; // { id, date }
 let dashRange = 7;
+let libraryFilter = "";
+let showMissingOnly = false;
 let resetArmTimer = null;
 
 const refs = {
@@ -234,7 +413,8 @@ const refs = {
   trendExercise: $("trendExercise"), trendChart: $("trendChart"),
   newExerciseForm: $("newExerciseForm"),
   newExerciseName: $("newExerciseName"), newExerciseGif: $("newExerciseGif"),
-  customList: $("customList"),
+  customList: $("customList"), libraryCount: $("libraryCount"),
+  librarySearch: $("librarySearch"), showMissingOnly: $("showMissingOnly"),
   planDay: $("planDay"), planEditor: $("planEditor"),
   toast: $("toast"), resetBtn: $("reset")
 };
@@ -315,6 +495,9 @@ function init() {
   $("exportBtn").addEventListener("click", exportData);
   $("importBtn").addEventListener("click", () => $("importFile").click());
   $("importFile").addEventListener("change", importData);
+  $("importMerge").addEventListener("click", () => applyImport("merge"));
+  $("importReplace").addEventListener("click", () => applyImport("replace"));
+  $("importCancel").addEventListener("click", clearPendingImport);
   refs.resetBtn.addEventListener("click", resetAll);
 
   // ---- Dashboard
@@ -331,8 +514,24 @@ function init() {
   // ---- Library
   refs.newExerciseForm.addEventListener("submit", handleNewExercise);
   refs.customList.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-delete-exercise]");
-    if (btn) deleteCustomExercise(btn.dataset.deleteExercise);
+    const del = e.target.closest("[data-delete-exercise]");
+    if (del) { deleteCustomExercise(del.dataset.deleteExercise); return; }
+    const save = e.target.closest("[data-save-gif]");
+    if (save) saveGifFor(save.dataset.saveGif);
+  });
+  refs.customList.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.target.classList.contains("library-gif-input")) {
+      e.preventDefault();
+      saveGifFor(e.target.dataset.gifFor);
+    }
+  });
+  refs.librarySearch.addEventListener("input", () => {
+    libraryFilter = refs.librarySearch.value;
+    renderLibrary();
+  });
+  refs.showMissingOnly.addEventListener("change", () => {
+    showMissingOnly = refs.showMissingOnly.checked;
+    renderLibrary();
   });
   refs.planDay.addEventListener("change", renderPlanEditor);
   $("addPlanExercise").addEventListener("click", () => {
@@ -351,6 +550,11 @@ function init() {
 
   renderAll();
   registerServiceWorker();
+
+  if (pendingUnitNotice) {
+    pendingUnitNotice = false;
+    showToast("Loads converted from kg to lb.");
+  }
 }
 
 function renderAll() {
@@ -401,7 +605,7 @@ function saveStudyHours() {
 function renderStudy() {
   const day = db.days[selectedDate];
   const hours = day && typeof day.study === "number" ? day.study : null;
-  refs.studyHours.value = hours ?? "";
+  refs.studyHours.value = hours === null ? "" : hours;
 
   const pct = hours === null ? 0 : Math.min(100, (hours / db.studyGoal) * 100);
   refs.studyProgressFill.style.width = `${pct}%`;
@@ -423,7 +627,9 @@ function renderToday() {
   const weekday = weekdayOf(selectedDate);
   refs.weekdayLabel.textContent = selectedDate === todayISO()
     ? `${weekday} — today` : weekday;
-  refs.plannedDayName.textContent = weekday;
+  refs.plannedDayName.textContent = dayTitles[weekday]
+    ? `${weekday} — ${dayTitles[weekday]}`
+    : weekday;
   refs.loggedDayName.textContent = niceDate(selectedDate);
 
   renderStudy();
@@ -438,27 +644,44 @@ function renderPlanned() {
 
   if (!planned.length) {
     refs.plannedList.innerHTML =
-      `<div class="empty-state">No planned exercises for ${escapeHtml(weekday)}. Edit your plan in the Library tab.</div>`;
+      `<div class="empty-state">Nothing planned for ${escapeHtml(weekday)}. Edit your plan in the Library tab.</div>`;
     return;
   }
 
-  refs.plannedList.innerHTML = planned.map((name) => {
+  const mobility = planned.filter((n) => typeFor(n) === "mobility");
+  const main = planned.filter((n) => typeFor(n) !== "mobility");
+
+  let html = "";
+  if (main.length) {
+    html += `<p class="group-label">Main${main.length > 1 ? " exercises" : ""}</p>`;
+    html += main.map(plannedCard).join("");
+  }
+  if (mobility.length) {
+    html += `<p class="group-label">Stretching &amp; mobility</p>`;
+    html += mobility.map(plannedCard).join("");
+  }
+  refs.plannedList.innerHTML = html;
+
+  function plannedCard(name) {
     const matches = entries.filter((e) => e.name === name);
     const isDone = matches.some((e) => e.done);
     const hasLog = matches.length > 0;
+    const cue = cueFor(name);
+    const isMobility = typeFor(name) === "mobility";
     return `
-      <div class="card">
+      <div class="card${isMobility ? " mobility-card" : ""}">
         <div class="plan-check-row">
           <div>
             <h3>${escapeHtml(name)}</h3>
+            ${cue ? `<p class="cue">${escapeHtml(cue)}</p>` : ""}
             <div class="badge-row">
-              <span class="badge planned">Planned</span>
-              ${isDone ? `<span class="badge done">Completed</span>` : ""}
+              ${isDone ? `<span class="badge done">Completed</span>`
+                       : `<span class="badge planned">To do</span>`}
             </div>
-            <p class="muted">${
-              isDone ? "Done" : hasLog ? "Logged, not marked done" : "Not completed yet"
-            }</p>
-            <button class="small-btn" type="button" data-log-exercise="${escapeHtml(name)}">Log details</button>
+            ${isMobility ? "" :
+              `<button class="small-btn" type="button" data-log-exercise="${escapeHtml(name)}">Log details</button>`}
+            ${!isMobility && hasLog && !isDone
+              ? `<p class="muted">Logged, not marked done</p>` : ""}
           </div>
           <label>
             <input type="checkbox" class="planned-checkbox"
@@ -467,7 +690,7 @@ function renderPlanned() {
           </label>
         </div>
       </div>`;
-  }).join("");
+  }
 }
 
 function togglePlanned(name, checked) {
@@ -510,7 +733,7 @@ function renderLogged() {
           <div>
             <h3>${escapeHtml(entry.name)}</h3>
             <p class="meta">${escapeHtml(setsSummary(entry))}</p>
-            ${vol ? `<p class="meta">Volume: ${vol.toLocaleString()} kg·reps</p>` : ""}
+            ${vol ? `<p class="meta">Volume: ${vol.toLocaleString()} ${UNIT}·reps</p>` : ""}
             ${entry.notes ? `<p class="muted">${escapeHtml(entry.notes)}</p>` : ""}
           </div>
         </div>
@@ -560,11 +783,27 @@ function handleEntryAction(e) {
    Workout form (per-set rows, edit with banner + cancel)
    ========================================================= */
 function refreshExerciseDropdowns() {
-  const names = Object.keys(getLibrary()).sort();
-  const options = names.map((n) =>
-    `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join("");
+  const lib = getLibrary();
+  const names = Object.keys(lib).sort();
+  const groups = [
+    ["Main exercises", names.filter((n) => lib[n].type === "main")],
+    ["Stretching & mobility", names.filter((n) => lib[n].type === "mobility")],
+    ["Other / previously used", names.filter((n) => lib[n].type === "legacy")]
+  ];
+
+  const options = groups.map(([label, items]) => {
+    if (!items.length) return "";
+    return `<optgroup label="${escapeHtml(label)}">` +
+      items.map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join("") +
+      `</optgroup>`;
+  }).join("");
+
+  const keepExercise = refs.exerciseSelect.value;
+  const keepTrend = refs.trendExercise.value;
   refs.exerciseSelect.innerHTML = options;
   refs.trendExercise.innerHTML = options;
+  if (keepExercise && lib[keepExercise]) refs.exerciseSelect.value = keepExercise;
+  if (keepTrend && lib[keepTrend]) refs.trendExercise.value = keepTrend;
   updateGifPreview();
 }
 
@@ -584,7 +823,7 @@ function addSetRow(load = "", reps = "") {
   row.className = "set-row";
   row.innerHTML = `
     <span class="set-num"></span>
-    <input type="number" min="0" step="0.5" placeholder="kg" class="set-load" aria-label="Load in kg" />
+    <input type="number" min="0" step="0.5" placeholder="lb" class="set-load" aria-label="Load in pounds" />
     <input type="number" min="0" step="1" placeholder="reps" class="set-reps" aria-label="Repetitions" />
     <button type="button" class="remove-btn" data-remove-set aria-label="Remove set">×</button>`;
   row.querySelector(".set-load").value = load;
@@ -714,7 +953,7 @@ function renderHistory() {
           <h3>${escapeHtml(niceDate(iso))}</h3>
           <button class="small-btn" type="button" data-open-date="${iso}">Open</button>
         </div>
-        <p class="meta">${d.workouts.length} exercise${d.workouts.length === 1 ? "" : "s"} logged · ${doneCount} done${vol ? ` · ${vol.toLocaleString()} kg·reps` : ""}</p>
+        <p class="meta">${d.workouts.length} exercise${d.workouts.length === 1 ? "" : "s"} logged · ${doneCount} done${vol ? ` · ${vol.toLocaleString()} ${UNIT}·reps` : ""}</p>
         <div class="badge-row">
           ${study !== null
             ? `<span class="badge ${study >= db.studyGoal ? "done" : "planned"}">Study: ${study} h${study >= db.studyGoal ? " ✓" : ""}</span>`
@@ -737,6 +976,8 @@ function exportData() {
   showToast("Backup exported.");
 }
 
+let pendingImport = null;
+
 function importData(event) {
   const file = event.target.files[0];
   event.target.value = "";
@@ -746,24 +987,96 @@ function importData(event) {
   reader.onload = () => {
     try {
       const parsed = JSON.parse(reader.result);
-      if (!parsed || parsed.version !== 7 || typeof parsed.days !== "object") {
+      const okVersion = parsed &&
+        (parsed.version === 7 || parsed.version === DB_VERSION);
+      if (!okVersion || typeof parsed.days !== "object") {
         showToast("That file is not a valid backup from this app.");
         return;
       }
-      db = parsed;
-      db.library = db.library || {};
-      db.plan = db.plan || clone(defaultPlan);
-      db.studyGoal = Number(db.studyGoal) || STUDY_GOAL;
-      saveDB();
-      cancelEdit();
-      refreshExerciseDropdowns();
-      renderAll();
-      showToast("Backup imported.");
+      normaliseDB(parsed);
+      let converted = false;
+      if (parsed.version === 7) {
+        convertLoadsKgToLb(parsed);   // older backup still in kilograms
+        parsed.version = DB_VERSION;
+        parsed.unit = UNIT;
+        converted = true;
+      }
+
+      pendingImport = parsed;
+
+      let workoutCount = 0, studyDays = 0;
+      Object.keys(parsed.days).forEach((iso) => {
+        const d = parsed.days[iso] || {};
+        workoutCount += (d.workouts || []).length;
+        if (typeof d.study === "number") studyDays++;
+      });
+      $("importSummary").textContent =
+        `The file contains ${Object.keys(parsed.days).length} day(s): ` +
+        `${workoutCount} workout entr${workoutCount === 1 ? "y" : "ies"} and ` +
+        `${studyDays} day(s) of study hours. ` +
+        `Merge keeps everything on this device and adds what's new from the file ` +
+        `(this device's weekly plan is kept). Replace erases this device's data first.` +
+        (converted ? " This backup was in kilograms and will be converted to pounds." : "");
+      $("importChoice").hidden = false;
     } catch {
       showToast("Could not read that file as JSON.");
     }
   };
   reader.readAsText(file);
+}
+
+function clearPendingImport() {
+  pendingImport = null;
+  $("importChoice").hidden = true;
+}
+
+function applyImport(mode) {
+  if (!pendingImport) return;
+
+  if (mode === "replace") {
+    db = pendingImport;
+  } else {
+    mergeIntoDB(pendingImport);
+  }
+
+  saveDB();
+  clearPendingImport();
+  cancelEdit();
+  refreshExerciseDropdowns();
+  renderAll();
+  showToast(mode === "replace" ? "Backup imported (replaced everything)." : "Backup merged.");
+}
+
+/** Merge rules:
+ *  - Days: union. Workout entries are added unless an entry with the same id
+ *    already exists here (so re-importing the same backup never duplicates).
+ *  - Study hours: taken from the file when this device has none for that day;
+ *    if both devices logged the same day, the higher value is kept.
+ *  - Exercise library: union; on a name clash this device's GIF path wins.
+ *  - Weekly plan and study goal: this device's are kept. */
+function mergeIntoDB(incoming) {
+  db.library = { ...incoming.library, ...db.library };
+
+  Object.keys(incoming.days).forEach((iso) => {
+    if (!isValidISO(iso)) return;
+    const inc = incoming.days[iso] || {};
+    const local = getDay(iso);
+
+    const existingIds = {};
+    local.workouts.forEach((w) => { existingIds[w.id] = true; });
+    (inc.workouts || []).forEach((w) => {
+      if (w && w.name && !existingIds[w.id]) {
+        local.workouts.push(clone(w));
+      }
+    });
+
+    if (typeof inc.study === "number") {
+      local.study = typeof local.study === "number"
+        ? Math.max(local.study, inc.study)
+        : inc.study;
+    }
+    pruneDay(iso);
+  });
 }
 
 function resetAll() {
@@ -828,7 +1141,7 @@ function renderStudyDashboard(dates) {
 
   refs.studyChart.innerHTML = barChart({
     dates,
-    values: values.map((v) => v ?? 0),
+    values: values.map((v) => (v === null ? 0 : v)),
     known: values.map((v) => v !== null),
     goal: db.studyGoal,
     colorFor: (v, has) => !has ? "#334155" : v >= db.studyGoal ? "#22c55e" : "#0ea5e9",
@@ -838,9 +1151,9 @@ function renderStudyDashboard(dates) {
 
 function renderWorkoutDashboard(dates) {
   const doneCounts = dates.map((iso) =>
-    (db.days[iso]?.workouts || []).filter((w) => w.done).length);
+    ((db.days[iso] || {}).workouts || []).filter((w) => w.done).length);
   const volumes = dates.map((iso) =>
-    (db.days[iso]?.workouts || []).reduce((s, w) => s + totalVolume(w), 0));
+    ((db.days[iso] || {}).workouts || []).reduce((s, w) => s + totalVolume(w), 0));
 
   const activeDays = doneCounts.filter((c) => c > 0).length;
   const totalDone = doneCounts.reduce((a, b) => a + b, 0);
@@ -849,7 +1162,7 @@ function renderWorkoutDashboard(dates) {
   refs.workoutStats.innerHTML = `
     <div class="stat"><strong>${activeDays}/${dates.length}</strong><span>active days</span></div>
     <div class="stat"><strong>${totalDone}</strong><span>exercises done</span></div>
-    <div class="stat"><strong>${totalVol >= 10000 ? (totalVol / 1000).toFixed(1) + "k" : totalVol.toLocaleString()}</strong><span>total kg·reps</span></div>`;
+    <div class="stat"><strong>${totalVol >= 10000 ? (totalVol / 1000).toFixed(1) + "k" : totalVol.toLocaleString()}</strong><span>total ${UNIT}·reps</span></div>`;
 
   refs.workoutChart.innerHTML = barChart({
     dates,
@@ -864,7 +1177,7 @@ function renderWorkoutDashboard(dates) {
     values: volumes,
     known: volumes.map(() => true),
     colorFor: (v) => v > 0 ? "#a78bfa" : "#334155",
-    unit: " kg·reps"
+    unit: " " + UNIT + "·reps"
   });
 }
 
@@ -874,14 +1187,14 @@ function renderTrendChart() {
   const points = [];
 
   dates.forEach((iso, i) => {
-    const entries = (db.days[iso]?.workouts || []).filter((w) => w.name === name);
+    const entries = ((db.days[iso] || {}).workouts || []).filter((w) => w.name === name);
     if (!entries.length) return;
     const max = Math.max(...entries.map(topLoad));
     if (max > 0) points.push({ i, iso, value: max });
   });
 
   refs.trendChart.innerHTML = points.length
-    ? lineChart({ dates, points, unit: " kg" })
+    ? lineChart({ dates, points, unit: " " + UNIT })
     : `<div class="empty-state">No loads recorded for ${escapeHtml(name)} in this range.</div>`;
 }
 
@@ -1009,7 +1322,7 @@ function handleNewExercise(event) {
     return;
   }
 
-  db.library[name] = gif;
+  db.library[name] = { gif, cue: "", type: "main" };
   saveDB();
   refreshExerciseDropdowns();
   refs.exerciseSelect.value = name;
@@ -1020,28 +1333,88 @@ function handleNewExercise(event) {
 }
 
 function deleteCustomExercise(name) {
+  const wasBuiltIn = Boolean(defaultLibrary[name]);
   delete db.library[name];
   saveDB();
   refreshExerciseDropdowns();
   renderLibrary();
-  showToast(`"${name}" removed from library.`);
+  updateGifPreview();
+  showToast(wasBuiltIn
+    ? `"${name}" reset to its built-in setting.`
+    : `"${name}" removed from library.`);
 }
 
 function renderLibrary() {
-  const names = Object.keys(db.library).sort();
+  const lib = getLibrary();
+  const filter = (libraryFilter || "").trim().toLowerCase();
+  const names = Object.keys(lib)
+    .filter((n) => !filter || n.toLowerCase().indexOf(filter) !== -1)
+    .filter((n) => !(showMissingOnly && lib[n].gif))
+    .sort();
+
+  const missing = Object.keys(lib).filter((n) => !lib[n].gif).length;
+  refs.libraryCount.textContent =
+    `${Object.keys(lib).length} exercises · ${missing} still without a GIF`;
+
   if (!names.length) {
-    refs.customList.innerHTML =
-      `<div class="empty-state">No custom exercises yet — add your first above.</div>`;
+    refs.customList.innerHTML = `<div class="empty-state">No exercises match that filter.</div>`;
     return;
   }
-  refs.customList.innerHTML = names.map((name) => `
-    <div class="card custom-row">
-      <div>
-        <h3>${escapeHtml(name)}</h3>
-        <span class="gif-path">${db.library[name] ? escapeHtml(db.library[name]) : "No GIF"}</span>
-      </div>
-      <button class="remove-btn" type="button" data-delete-exercise="${escapeHtml(name)}">Remove</button>
-    </div>`).join("");
+
+  refs.customList.innerHTML = names.map((name) => {
+    const entry = lib[name];
+    return `
+      <div class="card library-row">
+        <div class="library-head">
+          <div>
+            <h3>${escapeHtml(name)}</h3>
+            ${entry.cue ? `<p class="cue">${escapeHtml(entry.cue)}</p>` : ""}
+          </div>
+          <span class="badge ${entry.gif ? "done" : "planned"}">${entry.gif ? "GIF set" : "No GIF"}</span>
+        </div>
+        <div class="library-gif-row">
+          <input type="text" class="library-gif-input" data-gif-for="${escapeHtml(name)}"
+            value="${escapeHtml(entry.gif)}" placeholder="gifs/my-exercise.gif or https://..."
+            aria-label="GIF path or URL for ${escapeHtml(name)}" />
+          <button class="small-btn" type="button" data-save-gif="${escapeHtml(name)}">Save</button>
+        </div>
+        <div class="library-actions">
+          <a class="small-btn find-gif" target="_blank" rel="noopener noreferrer"
+            href="${escapeHtml(gifSearchUrl(name))}">Find a GIF</a>
+          ${isCustom(name)
+            ? `<button class="remove-btn" type="button" data-delete-exercise="${escapeHtml(name)}">Reset / remove</button>`
+            : ""}
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function saveGifFor(name) {
+  const input = refs.customList.querySelector(`[data-gif-for="${cssEscape(name)}"]`);
+  if (!input) return;
+  const value = input.value.trim();
+  const base = normaliseEntry(defaultLibrary[name]);
+
+  if (!value && !defaultLibrary[name]) {
+    showToast("Add a path or URL first.");
+    return;
+  }
+
+  db.library[name] = {
+    gif: value,
+    cue: (db.library[name] && db.library[name].cue) || base.cue,
+    type: base.type || "main"
+  };
+  saveDB();
+  renderLibrary();
+  updateGifPreview();
+  renderLogged();
+  showToast(value ? `GIF saved for ${name}.` : `GIF cleared for ${name}.`);
+}
+
+/** Minimal attribute-selector escaping for names with quotes or backslashes. */
+function cssEscape(value) {
+  return String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
 function renderPlanEditor() {
@@ -1090,4 +1463,15 @@ function registerServiceWorker() {
   }
 }
 
-init();
+try {
+  init();
+} catch (err) {
+  // If startup fails, say so on screen instead of leaving a dead UI.
+  const box = document.createElement("div");
+  box.style.cssText = "position:fixed;top:10px;left:10px;right:10px;z-index:99;" +
+    "background:#7f1d1d;color:#fff;padding:12px;border-radius:12px;font:14px sans-serif";
+  box.textContent = "The app failed to start: " + (err && err.message ? err.message : err) +
+    " — make sure index.html, style.css and script.js are all from the same version, then hard-refresh (Ctrl+Shift+R).";
+  document.body.appendChild(box);
+  console.error(err);
+}

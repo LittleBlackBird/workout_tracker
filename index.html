@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0b1220" />
   <title>Workout & Study Tracker</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=7.3" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
@@ -134,6 +134,14 @@
             <button id="importBtn" class="secondary-btn" type="button">Import data</button>
             <input id="importFile" type="file" accept="application/json" hidden />
           </div>
+          <div id="importChoice" class="import-choice" hidden>
+            <p id="importSummary" class="muted"></p>
+            <div class="import-choice-actions">
+              <button id="importMerge" class="secondary-btn" type="button">Merge with existing data</button>
+              <button id="importReplace" class="danger-btn" type="button">Replace everything</button>
+              <button id="importCancel" class="small-btn" type="button">Cancel</button>
+            </div>
+          </div>
         </section>
 
         <section class="panel footer-panel">
@@ -170,7 +178,7 @@
           <div id="workoutStats" class="stat-grid"></div>
           <p class="summary-label chart-caption">Exercises completed per day</p>
           <div id="workoutChart" class="chart-box"></div>
-          <p class="summary-label chart-caption">Total volume per day (kg &times; reps)</p>
+          <p class="summary-label chart-caption">Total volume per day (lb &times; reps)</p>
           <div id="volumeChart" class="chart-box"></div>
         </section>
 
@@ -182,7 +190,7 @@
             <label for="trendExercise">Exercise</label>
             <select id="trendExercise"></select>
           </div>
-          <p class="summary-label chart-caption">Heaviest set per day (kg)</p>
+          <p class="summary-label chart-caption">Heaviest set per day (lb)</p>
           <div id="trendChart" class="chart-box"></div>
         </section>
       </section>
@@ -204,6 +212,14 @@
             </div>
             <button class="secondary-btn" type="submit">Add to library</button>
           </form>
+          <div class="library-toolbar">
+            <span id="libraryCount" class="summary-label"></span>
+            <input id="librarySearch" type="text" placeholder="Filter exercises..." aria-label="Filter exercises" />
+            <label class="checkbox-row">
+              <input id="showMissingOnly" type="checkbox" />
+              <span>Only show exercises without a GIF</span>
+            </label>
+          </div>
           <div id="customList" class="stack-list custom-list"></div>
         </section>
 
@@ -227,6 +243,6 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=7.3"></script>
 </body>
 </html>
