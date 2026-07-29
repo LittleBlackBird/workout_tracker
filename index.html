@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0b1220" />
   <title>Workout & Study Tracker</title>
-  <link rel="stylesheet" href="style.css?v=7.3" />
+  <link rel="stylesheet" href="style.css?v=7.4" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
@@ -217,8 +217,10 @@
             <input id="librarySearch" type="text" placeholder="Filter exercises..." aria-label="Filter exercises" />
             <label class="checkbox-row">
               <input id="showMissingOnly" type="checkbox" />
-              <span>Only show exercises without a GIF</span>
+              <span>Only show exercises without an image</span>
             </label>
+            <button id="autoMatch" class="secondary-btn" type="button">Auto-match missing images</button>
+            <p class="muted">Pulls public-domain exercise images from the Free Exercise DB. Anything it can't match keeps the "Find a GIF" button.</p>
           </div>
           <div id="customList" class="stack-list custom-list"></div>
         </section>
@@ -243,6 +245,6 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="script.js?v=7.3"></script>
+  <script src="script.js?v=7.4"></script>
 </body>
 </html>

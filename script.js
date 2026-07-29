@@ -14,6 +14,40 @@ const STUDY_GOAL = 7;   // hours per day
 const UNIT = "lb";      // weight unit used everywhere
 const KG_TO_LB = 2.20462;
 
+/* Free Exercise DB (github.com/yuhonas/free-exercise-db) — public domain
+   (Unlicense). Each exercise has two frames, 0.jpg and 1.jpg, which the app
+   alternates to produce a GIF-like animation. */
+const FEDB_IMG = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/";
+const FEDB_JSON = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json";
+
+/* Search hints used when auto-matching our names against that dataset. */
+const FEDB_ALIASES = {
+  "Lat Pulldown": "wide grip lat pulldown",
+  "Farmer Walk": "farmers walk",
+  "Dead Hang": "pullup",
+  "Passive Dead Hang": "pullup",
+  "Tricep Pushdown": "triceps pushdown",
+  "Lateral Raise": "side lateral raise",
+  "Romanian Deadlift": "romanian deadlift",
+  "Daily Walk": "walking treadmill",
+  "Run": "running treadmill",
+  "Hike": "walking treadmill",
+  "Cat-Cow": "cat stretch",
+  "Bird-Dog": "bird dog",
+  "Child's Pose with Side Reach": "childs pose",
+  "Thread the Needle": "thoracic rotation",
+  "World's Greatest Stretch": "groiners",
+  "Legs-Up-The-Wall": "lying hamstring stretch",
+  "Standing Forward Fold": "standing toe touches",
+  "Wall Calf Stretch": "calf stretch elbows against wall",
+  "Kneeling Hip Flexor Stretch": "kneeling hip flexor",
+  "Kneeling Lunge Hip Flexor Stretch": "kneeling hip flexor",
+  "Standing Overhead Lat & Side Stretch": "lats side stretch",
+  "Deep Squat Hold": "bodyweight squat",
+  "Spinal Decompression": "lying hamstring stretch",
+  "Glute Bridge": "glute bridge"
+};
+
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 const dayTitles = {
@@ -64,9 +98,9 @@ const defaultPlan = {
 const defaultLibrary = {
   /* ---- Monday: pull & grip ---- */
   "Lat Pulldown":                        { gif: "gifs/lat-pulldown.gif",       cue: "3-4 sets",              type: "main" },
-  "Cable / Barbell Row":                 { gif: "gifs/row.gif",                cue: "3-4 sets",              type: "main" },
-  "Barbell Curl":                        { gif: "gifs/barbell-curl.gif",       cue: "3 sets",                type: "main" },
-  "Hammer Curl":                         { gif: "gifs/hammer-curl.gif",        cue: "3 sets",                type: "main" },
+  "Cable / Barbell Row":                 { gif: "gifs/row.gif",                cue: "3-4 sets",              type: "main", fedb: "Bent_Over_Barbell_Row" },
+  "Barbell Curl":                        { gif: "gifs/barbell-curl.gif",       cue: "3 sets",                type: "main", fedb: "Barbell_Curl" },
+  "Hammer Curl":                         { gif: "gifs/hammer-curl.gif",        cue: "3 sets",                type: "main", fedb: "Alternate_Hammer_Curl" },
   "Farmer Walk":                         { gif: "gifs/farmer-walk.gif",        cue: "3 loaded carries",      type: "main" },
   "Dead Hang":                           { gif: "gifs/dead-hang.gif",          cue: "Max hold",              type: "main" },
   "Child's Pose with Side Reach":        { gif: "",                            cue: "30 sec / side",         type: "mobility" },
@@ -74,28 +108,28 @@ const defaultLibrary = {
   "Thread the Needle":                   { gif: "",                            cue: "30 sec / side",         type: "mobility" },
 
   /* ---- Tuesday: push ---- */
-  "Bench Press":                         { gif: "gifs/bench-press.gif",        cue: "4 sets",                type: "main" },
-  "Incline Bench Press":                 { gif: "gifs/incline-bench.gif",      cue: "3 sets",                type: "main" },
-  "Dips":                                { gif: "gifs/dips.gif",               cue: "3 sets",                type: "main" },
+  "Bench Press":                         { gif: "gifs/bench-press.gif",        cue: "4 sets",                type: "main", fedb: "Barbell_Bench_Press_-_Medium_Grip" },
+  "Incline Bench Press":                 { gif: "gifs/incline-bench.gif",      cue: "3 sets",                type: "main", fedb: "Barbell_Incline_Bench_Press_-_Medium_Grip" },
+  "Dips":                                { gif: "gifs/dips.gif",               cue: "3 sets",                type: "main", fedb: "Bench_Dips" },
   "Tricep Pushdown":                     { gif: "gifs/tricep-pushdown.gif",    cue: "3 sets",                type: "main" },
   "Lateral Raise":                       { gif: "gifs/lateral-raise.gif",      cue: "3 sets",                type: "main" },
-  "Doorway / Corner Chest Stretch":      { gif: "",                            cue: "30 sec / side",         type: "mobility" },
+  "Doorway / Corner Chest Stretch":      { gif: "",                            cue: "30 sec / side",         type: "mobility", fedb: "Behind_Head_Chest_Stretch" },
   "Standing Overhead Lat & Side Stretch":{ gif: "",                            cue: "30 sec / side",         type: "mobility" },
   "Cat-Cow":                             { gif: "",                            cue: "10 slow reps",          type: "mobility" },
 
   /* ---- Wednesday: active recovery ---- */
   "Daily Walk":                          { gif: "gifs/walk.gif",               cue: "8,000-10,000 steps",    type: "main" },
   "Kneeling Hip Flexor Stretch":         { gif: "",                            cue: "45 sec / side",         type: "mobility" },
-  "Glute Bridge":                        { gif: "",                            cue: "2 x 12 (activation)",   type: "mobility" },
-  "Figure-4 / Seated Pigeon Stretch":    { gif: "",                            cue: "45 sec / side",         type: "mobility" },
+  "Glute Bridge":                        { gif: "",                            cue: "2 x 12 (activation)",   type: "mobility", fedb: "Barbell_Glute_Bridge" },
+  "Figure-4 / Seated Pigeon Stretch":    { gif: "",                            cue: "45 sec / side",         type: "mobility", fedb: "Ankle_On_The_Knee" },
 
   /* ---- Thursday: lower body ---- */
-  "Squat / Goblet Squat":                { gif: "https://commons.wikimedia.org/wiki/Special:FilePath/Squats.gif", cue: "4 sets", type: "main" },
+  "Squat / Goblet Squat":                { gif: "https://commons.wikimedia.org/wiki/Special:FilePath/Squats.gif", cue: "4 sets", type: "main", fedb: "Barbell_Squat" },
   "Romanian Deadlift":                   { gif: "",                            cue: "3-4 sets",              type: "main" },
-  "Lunge / Step-up":                     { gif: "",                            cue: "3 sets / side",         type: "main" },
-  "Calf Raise":                          { gif: "",                            cue: "3-4 sets",              type: "main" },
-  "Quad Stretch":                        { gif: "",                            cue: "30 sec / side",         type: "mobility" },
-  "Single-Leg Hamstring Stretch":        { gif: "",                            cue: "45 sec / side, soft knee", type: "mobility" },
+  "Lunge / Step-up":                     { gif: "",                            cue: "3 sets / side",         type: "main", fedb: "Barbell_Walking_Lunge" },
+  "Calf Raise":                          { gif: "",                            cue: "3-4 sets",              type: "main", fedb: "Barbell_Seated_Calf_Raise" },
+  "Quad Stretch":                        { gif: "",                            cue: "30 sec / side",         type: "mobility", fedb: "All_Fours_Quad_Stretch" },
+  "Single-Leg Hamstring Stretch":        { gif: "",                            cue: "45 sec / side, soft knee", type: "mobility", fedb: "90_90_Hamstring" },
   "Spinal Decompression":                { gif: "",                            cue: "5 min, legs 90° on chair", type: "mobility" },
 
   /* ---- Friday: cardio ---- */
@@ -106,8 +140,8 @@ const defaultLibrary = {
 
   /* ---- Saturday: hike ---- */
   "Hike":                                { gif: "gifs/hike.gif",               cue: "Trail / mountain",      type: "main" },
-  "Pigeon Pose / Floor Figure-4":        { gif: "",                            cue: "60 sec / side",         type: "mobility" },
-  "Butterfly Stretch":                   { gif: "",                            cue: "45 sec (adductors)",    type: "mobility" },
+  "Pigeon Pose / Floor Figure-4":        { gif: "",                            cue: "60 sec / side",         type: "mobility", fedb: "Ankle_On_The_Knee" },
+  "Butterfly Stretch":                   { gif: "",                            cue: "45 sec (adductors)",    type: "mobility", fedb: "Adductor_Groin" },
   "Legs-Up-The-Wall":                    { gif: "",                            cue: "5 min passive",         type: "mobility" },
 
   /* ---- Sunday: rest & reset ---- */
@@ -318,11 +352,12 @@ function pruneDay(iso) {
 /** Library entries may be a plain gif string (older data) or an object. */
 function normaliseEntry(value) {
   if (!value) return { gif: "", cue: "", type: "main" };
-  if (typeof value === "string") return { gif: value, cue: "", type: "main" };
+  if (typeof value === "string") return { gif: value, cue: "", type: "main", fedb: "" };
   return {
     gif: value.gif || "",
     cue: value.cue || "",
-    type: value.type || "main"
+    type: value.type || "main",
+    fedb: value.fedb || ""
   };
 }
 
@@ -337,14 +372,65 @@ function getLibrary() {
     merged[name] = merged[name]
       ? { gif: custom.gif || merged[name].gif,
           cue: custom.cue || merged[name].cue,
-          type: merged[name].type }
+          type: merged[name].type,
+          fedb: custom.fedb || merged[name].fedb }
       : custom;
   });
   return merged;
 }
 
 function libEntry(name) {
-  return getLibrary()[name] || { gif: "", cue: "", type: "main" };
+  return getLibrary()[name] || { gif: "", cue: "", type: "main", fedb: "" };
+}
+
+function hasImage(name) {
+  const e = libEntry(name);
+  return Boolean(e.gif || e.fedb);
+}
+
+/** Renders an exercise image. A GIF you supplied wins; if it is missing or
+ *  fails to load, it falls back to the two public-domain frames, which
+ *  animateFrames() alternates to imitate an animation. */
+function exerciseImageHtml(name, className) {
+  const entry = libEntry(name);
+  const alt = escapeHtml(name);
+  const a = entry.fedb ? escapeHtml(FEDB_IMG + encodeURI(entry.fedb) + "/0.jpg") : "";
+  const b = entry.fedb ? escapeHtml(FEDB_IMG + encodeURI(entry.fedb) + "/1.jpg") : "";
+  const frames = a ? `data-frame-a="${a}" data-frame-b="${b}"` : "";
+
+  if (entry.gif) {
+    return `<img class="${className}" src="${escapeHtml(entry.gif)}" alt="${alt}"
+      loading="lazy" ${frames} onerror="imageFallback(this)" />`;
+  }
+  if (a) {
+    return `<img class="${className} frame-anim" src="${a}" alt="${alt}"
+      loading="lazy" ${frames} onerror="this.remove()" />`;
+  }
+  return "";
+}
+
+/** A local GIF that isn't there shouldn't leave an empty box. */
+function imageFallback(img) {
+  const a = img.dataset.frameA;
+  if (a && img.getAttribute("src") !== a) {
+    img.classList.add("frame-anim");
+    img.setAttribute("src", a);
+    img.onerror = () => img.remove();
+  } else {
+    img.remove();
+  }
+}
+
+/** Alternates the two still frames so the images read as animations. */
+function animateFrames() {
+  let flipped = false;
+  setInterval(() => {
+    flipped = !flipped;
+    document.querySelectorAll("img.frame-anim").forEach((img) => {
+      const next = flipped ? img.dataset.frameB : img.dataset.frameA;
+      if (next && img.getAttribute("src") !== next) img.setAttribute("src", next);
+    });
+  }, 900);
 }
 
 function gifFor(name) {
@@ -415,6 +501,7 @@ const refs = {
   newExerciseName: $("newExerciseName"), newExerciseGif: $("newExerciseGif"),
   customList: $("customList"), libraryCount: $("libraryCount"),
   librarySearch: $("librarySearch"), showMissingOnly: $("showMissingOnly"),
+  autoMatch: $("autoMatch"),
   planDay: $("planDay"), planEditor: $("planEditor"),
   toast: $("toast"), resetBtn: $("reset")
 };
@@ -529,6 +616,7 @@ function init() {
     libraryFilter = refs.librarySearch.value;
     renderLibrary();
   });
+  refs.autoMatch.addEventListener("click", autoMatchImages);
   refs.showMissingOnly.addEventListener("change", () => {
     showMissingOnly = refs.showMissingOnly.checked;
     renderLibrary();
@@ -549,6 +637,7 @@ function init() {
   });
 
   renderAll();
+  animateFrames();
   registerServiceWorker();
 
   if (pendingUnitNotice) {
@@ -724,7 +813,6 @@ function renderLogged() {
   }
 
   refs.loggedList.innerHTML = entries.map((entry) => {
-    const gif = gifFor(entry.name);
     const planned = isPlanned(entry.name, selectedDate);
     const vol = totalVolume(entry);
     return `
@@ -741,7 +829,7 @@ function renderLogged() {
           <span class="badge planned">${planned ? "Planned" : "Extra"}</span>
           ${entry.done ? `<span class="badge done">Done</span>` : `<span class="badge date">Recorded only</span>`}
         </div>
-        ${gif ? `<img class="exercise-gif" src="${escapeHtml(gif)}" alt="${escapeHtml(entry.name)}" loading="lazy" onerror="this.remove()" />` : ""}
+        ${exerciseImageHtml(entry.name, "exercise-gif")}
         <div class="card-actions">
           <button class="small-btn" type="button" data-action="edit" data-id="${entry.id}">Edit</button>
           <button class="small-btn" type="button" data-action="duplicate" data-id="${entry.id}">Duplicate</button>
@@ -808,14 +896,10 @@ function refreshExerciseDropdowns() {
 }
 
 function updateGifPreview() {
-  const gif = gifFor(refs.exerciseSelect.value);
-  if (!gif) {
-    refs.gifPreviewContainer.innerHTML = `<span class="muted">No GIF for this exercise</span>`;
-    return;
-  }
-  refs.gifPreviewContainer.innerHTML =
-    `<img src="${escapeHtml(gif)}" alt="${escapeHtml(refs.exerciseSelect.value)}"
-      onerror="if(this.parentElement)this.parentElement.innerHTML='<span class=&quot;muted&quot;>GIF not found</span>'" />`;
+  const name = refs.exerciseSelect.value;
+  const html = exerciseImageHtml(name, "preview-img");
+  refs.gifPreviewContainer.innerHTML = html ||
+    `<span class="muted">No image yet — add one in the Library tab</span>`;
 }
 
 function addSetRow(load = "", reps = "") {
@@ -1349,12 +1433,12 @@ function renderLibrary() {
   const filter = (libraryFilter || "").trim().toLowerCase();
   const names = Object.keys(lib)
     .filter((n) => !filter || n.toLowerCase().indexOf(filter) !== -1)
-    .filter((n) => !(showMissingOnly && lib[n].gif))
+    .filter((n) => !(showMissingOnly && (lib[n].gif || lib[n].fedb)))
     .sort();
 
-  const missing = Object.keys(lib).filter((n) => !lib[n].gif).length;
+  const missing = Object.keys(lib).filter((n) => !lib[n].gif && !lib[n].fedb).length;
   refs.libraryCount.textContent =
-    `${Object.keys(lib).length} exercises · ${missing} still without a GIF`;
+    `${Object.keys(lib).length} exercises · ${missing} still without an image`;
 
   if (!names.length) {
     refs.customList.innerHTML = `<div class="empty-state">No exercises match that filter.</div>`;
@@ -1370,7 +1454,9 @@ function renderLibrary() {
             <h3>${escapeHtml(name)}</h3>
             ${entry.cue ? `<p class="cue">${escapeHtml(entry.cue)}</p>` : ""}
           </div>
-          <span class="badge ${entry.gif ? "done" : "planned"}">${entry.gif ? "GIF set" : "No GIF"}</span>
+          <span class="badge ${entry.gif || entry.fedb ? "done" : "planned"}">${
+            entry.gif ? "Custom GIF" : entry.fedb ? "Free Exercise DB" : "No image"
+          }</span>
         </div>
         <div class="library-gif-row">
           <input type="text" class="library-gif-input" data-gif-for="${escapeHtml(name)}"
@@ -1387,6 +1473,78 @@ function renderLibrary() {
         </div>
       </div>`;
   }).join("");
+}
+
+/** Downloads the public-domain exercise index once and fills in an image for
+ *  every exercise that still lacks one, by matching names. Only the resulting
+ *  name -> id map is kept; the dataset itself is discarded. */
+async function autoMatchImages() {
+  const btn = refs.autoMatch;
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = "Matching...";
+
+  try {
+    const res = await fetch(FEDB_JSON);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+
+    const index = data.map((ex) => ({ id: ex.id, tokens: tokenise(ex.name) }));
+    const lib = getLibrary();
+    let matched = 0;
+
+    Object.keys(lib).forEach((name) => {
+      if (lib[name].fedb) return;
+      const query = tokenise(FEDB_ALIASES[name] || name);
+      const best = bestMatch(query, index);
+      if (!best) return;
+      const base = normaliseEntry(defaultLibrary[name]);
+      db.library[name] = {
+        gif: (db.library[name] && db.library[name].gif) || "",
+        cue: (db.library[name] && db.library[name].cue) || base.cue,
+        type: base.type || "main",
+        fedb: best
+      };
+      matched++;
+    });
+
+    saveDB();
+    renderLibrary();
+    renderLogged();
+    updateGifPreview();
+    showToast(matched
+      ? `Matched ${matched} exercise${matched === 1 ? "" : "s"}.`
+      : "Everything already has an image.");
+  } catch (err) {
+    showToast("Couldn't reach the image database — check your connection.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+function tokenise(text) {
+  return String(text).toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((t) => t && t !== "the" && t !== "a" && t !== "and" && t !== "with");
+}
+
+/** Overlap score; requires a decent share of the query to be present. */
+function bestMatch(query, index) {
+  if (!query.length) return null;
+  let bestId = null, bestScore = 0;
+  index.forEach((item) => {
+    let hits = 0;
+    query.forEach((q) => {
+      if (item.tokens.some((t) => t === q || t.indexOf(q) === 0 || q.indexOf(t) === 0)) hits++;
+    });
+    if (!hits) return;
+    // favour matches that also don't drag in lots of unrelated words
+    const score = (hits / query.length) * 2 - (item.tokens.length - hits) * 0.06;
+    if (score > bestScore) { bestScore = score; bestId = item.id; }
+  });
+  return bestScore >= 1.2 ? bestId : null;
 }
 
 function saveGifFor(name) {
